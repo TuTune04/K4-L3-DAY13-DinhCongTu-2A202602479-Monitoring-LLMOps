@@ -4,13 +4,13 @@
 
 ## 1. Thông tin học viên
 
-- **Họ và tên:**
-- **MSSV:**
+- **Họ và tên:** Đinh Công Tú
+- **MSSV:** 2A202602479
 - **Lớp:** K4-L3A
-- **Repository URL:**
+- **Repository URL:** https://github.com/TuTune04/K4-L3-DAY13-DinhCongTu-2A202602479-Monitoring-LLMOps
 - **Commit SHA cuối:**
 - **Challenge ID:**
-- **Tên project Langfuse cá nhân:** `day13-k4-l3a-<MSSV>`
+- **Tên project Langfuse cá nhân:** `day13-k4-l3a-02479`
 
 ## 2. Evidence index
 
@@ -37,9 +37,9 @@
 
 | Nội dung | Baseline | Kết quả cuối | Nhận xét |
 |---|---|---|---|
-| `validate_logs.py` | | | |
-| `validate_dashboard.py` | | | |
-| `pytest` | | | |
+| `validate_logs.py` | 30/100 — 23 records, 20 thiếu required fields, 20 thiếu enrichment, 0 correlation ID, 0 PII leak | | Baseline CP0; FAILED required fields / correlation ID / enrichment, PASSED PII scrubbing |
+| `validate_dashboard.py` | HỢP LỆ: 6/6 panel có trong dashboard contract | | Baseline CP0 |
+| `pytest` | Chưa chạy được: `No module named pytest` | | Cần `pip install -r requirements.txt` |
 | Số traces hợp lệ | | | |
 | Số PII leak | | | |
 | Latency P95 / TTFT P95 | | | |
