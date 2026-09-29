@@ -7,7 +7,16 @@ primary_slo:
     total_event: 'event == "request_received"'
   target_percent: 99.5
   error_budget_percent: 0.5
-  note: Học viên phải giải thích hoặc điều chỉnh ngưỡng bằng baseline của mình.
+  # Baseline đo trên load test (60 phút, không incident): P50 241 ms, P95 545 ms,
+  # P99 550 ms, TTFT P95 50 ms, error rate 0%.
+  # Giữ ngưỡng 3000 ms: gấp ~5.5 lần P95 baseline nên traffic bình thường không đốt budget,
+  # nhưng một phụ thuộc chậm như rag_slow (+2.5 s) đẩy request vượt ngưỡng ngay.
+  # Giữ target 99.5%: app là chatbot nội bộ, cho phép 1/200 request chậm hoặc lỗi.
+  error_budget:
+    requests: 'Cứ 10 000 request được phép tối đa 50 request lỗi hoặc > 3000 ms'
+    time_equivalent: '0.5% x 28 ngày = 201.6 phút ≈ 3 giờ 22 phút sự cố toàn phần mỗi 28 ngày'
+    burn_rate_alert: 'Error rate 2% (alert 2) đốt budget nhanh gấp 4 lần; duy trì liên tục sẽ hết budget sau 7 ngày'
+  note: Ngưỡng và target được giải thích bằng baseline ở trên.
 guardrails:
   error_rate_pct_max: 2
   daily_cost_usd_max: 2.5
