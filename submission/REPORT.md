@@ -10,7 +10,7 @@
 - **Repository URL:** https://github.com/TuTune04/K4-L3-DAY13-DinhCongTu-2A202602479-Monitoring-LLMOps
 - **Commit SHA cuối:**
 - **Challenge ID:**
-- **Tên project Langfuse cá nhân:** `day13-k4-l3a-02479`
+- **Tên project Langfuse cá nhân:** `day13-k4-l3a-2A202602479`
 
 ## 2. Evidence index
 
@@ -18,20 +18,24 @@
 
 | Evidence | Đường dẫn |
 |---|---|
-| Pytest cuối | `evidence/01-pytest.png` |
-| Log validator | `evidence/02-log-validator.png` |
-| Dashboard validator | `evidence/03-dashboard-validator.png` |
-| Structured log | `evidence/04-structured-log.png` |
-| PII redaction | `evidence/05-pii-redaction.png` |
-| Trace list | `evidence/06-trace-list.png` |
-| Trace waterfall | `evidence/07-trace-waterfall.png` |
-| Trace metadata | `evidence/08-trace-metadata.png` |
-| Prompt versions | `evidence/09-prompt-versions.png` |
-| Prompt rollback | `evidence/10-prompt-rollback.png` |
-| Dashboard runtime | `evidence/11-dashboard-overview.png` |
-| Incident metric | `evidence/12-incident-metric.png` |
-| Incident log | `evidence/13-incident-log.png` |
-| Incident trace | `evidence/14-incident-trace.png` |
+| Pytest cuối | [evidence/01-pytest.txt](evidence/01-pytest.txt) |
+| Log validator | [evidence/02-log-validator.txt](evidence/02-log-validator.txt) |
+| Dashboard validator | [evidence/03-dashboard-validator.txt](evidence/03-dashboard-validator.txt) |
+| Structured log | [evidence/04-structured-log.txt](evidence/04-structured-log.txt) |
+| PII redaction | [evidence/05-pii-redaction.txt](evidence/05-pii-redaction.txt) |
+| Trace list | [evidence/06-trace-list.txt](evidence/06-trace-list.txt) |
+| Trace waterfall | [evidence/07-trace-waterfall.txt](evidence/07-trace-waterfall.txt) |
+| Trace metadata | [evidence/08-trace-metadata.txt](evidence/08-trace-metadata.txt) |
+| Prompt versions | [evidence/09-prompt-versions.txt](evidence/09-prompt-versions.txt) |
+| Prompt rollback | [evidence/10-prompt-rollback.txt](evidence/10-prompt-rollback.txt) |
+| Dashboard runtime | [evidence/11-dashboard-overview.png](evidence/11-dashboard-overview.png) |
+| Incident metric | `evidence/12-incident-metric.png` (CP3) |
+| Incident log | `evidence/13-incident-log.png` (CP3) |
+| Incident trace | `evidence/14-incident-trace.png` (CP3) |
+
+Evidence 01–11 được thu từ dữ liệu chạy thật bằng [`scripts/collect_evidence.py`](../scripts/collect_evidence.py): 01–03 là output lệnh, 04–05 trích từ `data/logs.jsonl`, 06–10 truy vấn Langfuse Public API của project cá nhân, 11 là ảnh chụp headless của `scripts/dashboard.py`.
+
+![Dashboard overview](evidence/11-dashboard-overview.png)
 
 ## 3. Kết quả kỹ thuật
 
@@ -40,10 +44,10 @@
 | `validate_logs.py` | 30/100 — 23 records, 20 thiếu required fields, 20 thiếu enrichment, 0 correlation ID, 0 PII leak | 100/100 — 20 records, 0 thiếu required, 0 thiếu enrichment, 10 correlation ID, 0 PII leak | Baseline CP0; FAILED required fields / correlation ID / enrichment, PASSED PII scrubbing |
 | `validate_dashboard.py` | HỢP LỆ: 6/6 panel có trong dashboard contract | HỢP LỆ: 6/6 panel | Baseline CP0 |
 | `pytest` | 22 passed | 27 passed (CP2) | Chạy bằng `.venv/bin/python -m pytest -q` (Python 3.12) |
-| Số traces hợp lệ | 10 trace `lab-agent-run` từ load test | 26 trace (CP2), mỗi trace có `retrieval` + `llm-generation` | Xác nhận qua Langfuse Observations API v2, project `day13-k4-l3a-02479`; `userId` đều là hash 12 ký tự |
+| Số traces hợp lệ | 10 trace `lab-agent-run` từ load test | 76 trace có đủ root + `retrieval` + `llm-generation` (98 trace trong 24h, gồm 10 trace baseline CP0) | Xác nhận qua Langfuse Observations API v2, project `day13-k4-l3a-2A202602479`; `userId` đều là hash 12 ký tự |
 | Số PII leak | 0 | 0 | Log và trace chỉ chứa preview đã scrub |
-| Latency P95 / TTFT P95 | | 545 ms / 50 ms | Dashboard, 60 phút, không incident |
-| Retrieval success rate | | 100% | Error rate 0% |
+| Latency P95 / TTFT P95 | | 485 ms / 50 ms | Dashboard lúc 08:28 UTC, 60 phút, 89 request, không incident |
+| Retrieval success rate | | 100% | Error rate 0%, quality mean 0.87, cost $0.18 |
 
 ## 4. Logging và PII
 
@@ -54,7 +58,7 @@
 
 ## 5. Tracing và prompt versioning
 
-- **Cách xác nhận traces do chính tôi tạo trong project cá nhân:** gọi Langfuse Public API bằng key trong `.env` của tôi: `/api/public/projects` trả đúng project `day13-k4-l3a-02479`, `/api/public/v2/observations` trả các trace có `correlation_id` trùng với log local (ví dụ `req-b1a5e001`).
+- **Cách xác nhận traces do chính tôi tạo trong project cá nhân:** gọi Langfuse Public API bằng key trong `.env` của tôi: `/api/public/projects` trả đúng project `day13-k4-l3a-2A202602479`, `/api/public/v2/observations` trả các trace có `correlation_id` trùng với log local (ví dụ `req-b1a5e001`).
 - **Cấu trúc root/retrieval/generation observations:** root `lab-agent-run` (type AGENT, `@observe`, không capture input/output) → con `retrieval` (RETRIEVER, input là `query_preview` đã scrub, output `doc_count`) → con `llm-generation` (GENERATION, có `model`, link tới prompt `day13-chat`, `usage_details` input/output, `cost_details` input/output/total, metadata `ttft_ms`). Hai observation con có `parentObservationId` là root, nên waterfall cho thấy ngay bước nào chậm.
 - **Cách nối trace với log:** `correlation_id` từ middleware được truyền vào `LabAgent.run` và đưa vào trace metadata qua `propagate_attributes`; cùng giá trị đó có trong mọi dòng log của request. Tìm log → lấy `correlation_id` → lọc metadata trên Langfuse (hoặc ngược lại).
 - **Prompt name:** `day13-chat` (text prompt)
@@ -69,7 +73,7 @@
 
 ## 6. Dashboard, SLO và alerts
 
-- **Dashboard và sáu panel:** `python scripts/dashboard.py` (stdlib + PyYAML) mở http://127.0.0.1:8050, đọc `data/logs.jsonl` và `config/dashboard.yaml`, time range 60 phút, auto refresh 30 s. Mỗi panel có tên, đơn vị, đường threshold nét đứt đỏ và badge OK/VƯỢT NGƯỠNG: (1) latency P50/P95/P99 + TTFT P95, (2) request/phút, (3) error rate + breakdown `error_type` + retrieval success, (4) cost theo phút + lũy kế, (5) tokens_in/tokens_out lũy kế, (6) mean quality. Baseline: P95 545 ms, TTFT P95 50 ms, error 0%, retrieval 100%, cost $0.055, tokens 967/3 490, quality 0.86. Traffic 0.47 req/phút dưới ngưỡng ≥ 1 vì chỉ có load test rời rạc.
+- **Dashboard và sáu panel:** `python scripts/dashboard.py` (stdlib + PyYAML) mở http://127.0.0.1:8050, đọc `data/logs.jsonl` và `config/dashboard.yaml`, time range 60 phút, auto refresh 30 s. Mỗi panel có tên, đơn vị, đường threshold nét đứt đỏ và badge OK/VƯỢT NGƯỠNG: (1) latency P50/P95/P99 + TTFT P95, (2) request/phút, (3) error rate + breakdown `error_type` + retrieval success, (4) cost theo phút + lũy kế, (5) tokens_in/tokens_out lũy kế, (6) mean quality. Ảnh `evidence/11-dashboard-overview.png` (08:28 UTC, 89 request): P50/P95/P99 151/485/568 ms, TTFT P95 50 ms, 1.48 req/phút, error 0%, retrieval 100%, cost $0.1788, tokens 3 040/11 313, quality 0.87 — cả 6 panel OK.
 - **SLO và lý do chọn:** giữ SLO `fast_successful_requests`: 99.5% request trả `response_sent` trong ≤ 3000 ms, cửa sổ 28 ngày. 3000 ms gấp ~5.5 lần P95 baseline (545 ms) nên traffic bình thường không đốt budget, còn `rag_slow` (+2.5 s) vượt ngưỡng ngay. Chi tiết trong `config/slo.yaml`.
 - **Cách tính error budget:** budget = 100% − 99.5% = 0.5%, tức 50 request xấu trên 10 000 request, hoặc 0.5% × 28 ngày = 201.6 phút (≈ 3 giờ 22 phút) sự cố toàn phần. Error rate 2% (ngưỡng alert 2) đốt budget nhanh gấp 4 lần, giữ liên tục sẽ hết budget sau 7 ngày.
 - **Ba alert và runbook tương ứng:** trong `config/alert_rules.yaml` và `docs/alerts.md`, cùng kênh Slack `#day13-l3a-alerts`:

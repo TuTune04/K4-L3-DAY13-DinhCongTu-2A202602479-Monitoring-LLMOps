@@ -85,6 +85,16 @@ python -m pytest -q
 
 Baseline log chưa đạt là bình thường vì các `TODO` của CP1 chưa được làm. Ghi lại kết quả baseline vào `submission/REPORT.md` trước khi sửa.
 
+### Dashboard và evidence
+
+```bash
+python scripts/dashboard.py              # dashboard 6 panel tại http://127.0.0.1:8050 (refresh 30s)
+python scripts/dashboard.py --once dashboard.html   # xuất một file HTML tĩnh
+python scripts/collect_evidence.py       # thu evidence 01–11 vào submission/evidence/
+```
+
+`collect_evidence.py` cần Langfuse key trong `.env`. Muốn chụp ảnh dashboard thì cài thêm `pip install playwright && python -m playwright install chromium`; nếu không cài, script bỏ qua ảnh 11.
+
 ## Lộ trình 14:00–18:00 (240 phút)
 
 | Mốc | Thời gian | Việc chính | Hoàn thành khi |

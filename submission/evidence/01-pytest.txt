@@ -1,0 +1,9 @@
+# Pytest
+# Thời điểm thu: 2026-09-29 08:28:15 UTC
+# Commit HEAD khi thu: e7c12ad (working tree có thể chứa thay đổi chưa commit)
+$ python -m pytest -q
+
+...........................                                              [100%]
+27 passed in 2.38s
+
+[exit code 0]

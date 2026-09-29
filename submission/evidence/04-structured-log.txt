@@ -1,0 +1,32 @@
+# Structured log — mọi dòng log của một request
+# Thời điểm thu: 2026-09-29 08:28:15 UTC
+# Commit HEAD khi thu: e7c12ad (working tree có thể chứa thay đổi chưa commit)
+$ grep req-7b433ca0 data/logs.jsonl
+
+{"service": "api", "payload": {"message_preview": "How should alerts be designed?"}, "event": "request_received", "model": "claude-sonnet-4-5", "user_id_hash": "105a9cef3903", "feature": "qa", "session_id": "s10", "correlation_id": "req-7b433ca0", "env": "dev", "level": "info", "ts": "2026-09-29T08:26:53.533273Z"}
+{"service": "api", "latency_ms": 151, "ttft_ms": 50, "tokens_in": 28, "tokens_out": 102, "cost_usd": 0.001614, "quality_score": 0.9, "tool_name": "retrieval", "tool_success": true, "payload": {"answer_preview": "Starter answer. You should improve this output logic and add better quality chec..."}, "event": "response_sent", "model": "claude-sonnet-4-5", "user_id_hash": "105a9cef3903", "feature": "qa", "session_id": "s10", "correlation_id": "req-7b433ca0", "env": "dev", "level": "info", "ts": "2026-09-29T08:26:53.686141Z"}
+
+# Dạng dễ đọc (response_sent):
+{
+  "service": "api",
+  "latency_ms": 151,
+  "ttft_ms": 50,
+  "tokens_in": 28,
+  "tokens_out": 102,
+  "cost_usd": 0.001614,
+  "quality_score": 0.9,
+  "tool_name": "retrieval",
+  "tool_success": true,
+  "payload": {
+    "answer_preview": "Starter answer. You should improve this output logic and add better quality chec..."
+  },
+  "event": "response_sent",
+  "model": "claude-sonnet-4-5",
+  "user_id_hash": "105a9cef3903",
+  "feature": "qa",
+  "session_id": "s10",
+  "correlation_id": "req-7b433ca0",
+  "env": "dev",
+  "level": "info",
+  "ts": "2026-09-29T08:26:53.686141Z"
+}

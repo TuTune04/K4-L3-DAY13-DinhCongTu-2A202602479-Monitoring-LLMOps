@@ -1,0 +1,8 @@
+# Dashboard validator
+# Thời điểm thu: 2026-09-29 08:28:15 UTC
+# Commit HEAD khi thu: e7c12ad (working tree có thể chứa thay đổi chưa commit)
+$ python scripts/validate_dashboard.py
+
+HỢP LỆ: 6/6 panel có trong dashboard contract.
+
+[exit code 0]

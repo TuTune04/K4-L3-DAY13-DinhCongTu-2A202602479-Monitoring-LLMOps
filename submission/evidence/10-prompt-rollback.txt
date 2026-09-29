@@ -1,0 +1,20 @@
+# Prompt promote/rollback — project `day13-k4-l3a-2A202602479`
+# Thời điểm thu: 2026-09-29 08:28:17 UTC
+# Commit HEAD khi thu: e7c12ad (working tree có thể chứa thay đổi chưa commit)
+
+Các bước đã chạy (langfuse.update_prompt):
+  1. Trước:    v1 ['baseline','production']  v2 ['candidate','latest']
+  2. Promote:  update_prompt(version=2, new_labels=['candidate','production'])
+               -> v1 ['baseline']  v2 ['candidate','production','latest']
+  3. Rollback: update_prompt(version=1, new_labels=['baseline','production'])
+               -> v1 ['baseline','production']  v2 ['candidate','latest']
+
+Trace chứng minh (cùng input 'Explain the monitoring policy'):
+  2026-09-29T08:07:27.977Z  d03d1363a6117941e037e26bb89589a7  req-b1a5e001   label=baseline   version=1  <- label baseline (v1)
+  2026-09-29T08:07:28.561Z  cecb566c8204ea89edb7e38f28ee8099  req-cad1d002   label=candidate  version=2  <- label candidate (v2)
+  2026-09-29T08:08:49.604Z  13633b8b1841b0f975d6051491d18b4e  req-a0d00002   label=production version=2  <- production sau khi promote sang v2
+  2026-09-29T08:09:00.790Z  decd785d6239c758ac70a8367ffff88a  req-a0d00001   label=production version=1  <- production sau khi rollback về v1
+
+Trạng thái label hiện tại:
+  v1 ['baseline', 'production']
+  v2 ['candidate', 'latest']
