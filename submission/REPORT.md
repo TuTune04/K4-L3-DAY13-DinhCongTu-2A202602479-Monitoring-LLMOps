@@ -39,8 +39,8 @@
 |---|---|---|---|
 | `validate_logs.py` | 30/100 — 23 records, 20 thiếu required fields, 20 thiếu enrichment, 0 correlation ID, 0 PII leak | | Baseline CP0; FAILED required fields / correlation ID / enrichment, PASSED PII scrubbing |
 | `validate_dashboard.py` | HỢP LỆ: 6/6 panel có trong dashboard contract | | Baseline CP0 |
-| `pytest` | Chưa chạy được: `No module named pytest` | | Cần `pip install -r requirements.txt` |
-| Số traces hợp lệ | | | |
+| `pytest` | 22 passed | | Chạy bằng `.venv/bin/python -m pytest -q` (Python 3.12) |
+| Số traces hợp lệ | 10 trace `lab-agent-run` từ load test | | Xác nhận qua Langfuse API, project `day13-k4-l3a-02479` |
 | Số PII leak | | | |
 | Latency P95 / TTFT P95 | | | |
 | Retrieval success rate | | | |
