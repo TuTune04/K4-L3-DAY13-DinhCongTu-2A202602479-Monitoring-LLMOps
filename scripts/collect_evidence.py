@@ -377,6 +377,67 @@ def incident_dashboard_screenshot() -> None:
             browser.close()
 
 
+TERMINAL_SHOTS = {
+    "02-log-validator.png": ["python scripts/validate_logs.py"],
+    "03-dashboard-validator.png": ["python scripts/validate_dashboard.py"],
+    "04-structured-log.png": [
+        "curl -s -i -X POST http://127.0.0.1:8000/chat -H 'content-type: application/json' "
+        "-H 'x-request-id: req-e04e04e0' "
+        "-d '{\"user_id\":\"u-log-demo\",\"session_id\":\"s-log-demo\",\"feature\":\"qa\","
+        "\"message\":\"How do I debug tail latency?\"}' | grep -iE '^(HTTP|x-request-id|x-response-time-ms)'",
+        "grep req-e04e04e0 data/logs.jsonl | python -m json.tool --json-lines",
+    ],
+    "05-pii-redaction.png": [
+        "curl -s -o /dev/null -w '%{http_code}\\n' -X POST http://127.0.0.1:8000/chat "
+        "-H 'content-type: application/json' -H 'x-request-id: req-e05a0001' "
+        "-d '{\"user_id\":\"u-pii-a\",\"session_id\":\"s-pii\",\"feature\":\"qa\","
+        "\"message\":\"Email student@vinuni.edu.vn phone 0987654321\"}'",
+        "curl -s -o /dev/null -w '%{http_code}\\n' -X POST http://127.0.0.1:8000/chat "
+        "-H 'content-type: application/json' -H 'x-request-id: req-e05a0002' "
+        "-d '{\"user_id\":\"u-pii-b\",\"session_id\":\"s-pii\",\"feature\":\"qa\","
+        "\"message\":\"CCCD 001203004567 card 4111 1111 1111 1111\"}'",
+        "grep -h -E 'req-e05a000[12]' data/logs.jsonl | grep request_received",
+        "for v in student@vinuni.edu.vn 0987654321 001203004567 '4111 1111 1111 1111'; "
+        "do echo \"$v -> $(grep -c \"$v\" data/logs.jsonl)\"; done",
+    ],
+}
+
+
+def terminal_screenshots() -> None:
+    """Chạy lệnh thật trong bash và render stdout/stderr thành ảnh kiểu terminal."""
+    import html as html_lib
+
+    from playwright.sync_api import sync_playwright
+
+    python_dir = str(Path(sys.executable).parent)
+    env = {**os.environ, "PATH": python_dir + os.pathsep + os.environ.get("PATH", "")}
+    pages = {}
+    for filename, commands in TERMINAL_SHOTS.items():
+        body = ""
+        for command in commands:
+            result = subprocess.run(
+                ["bash", "-c", command], cwd=REPO_ROOT, capture_output=True, text=True, env=env
+            )
+            body += f'<span class="prompt">$ </span><span class="cmd">{html_lib.escape(command)}</span>\n'
+            body += html_lib.escape(result.stdout + result.stderr) + "\n"
+        stamp = f"{datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC"
+        pages[filename] = f"""<!doctype html><meta charset="utf-8"><style>
+body{{margin:0;background:#1e1e1e;font:14px/1.45 'DejaVu Sans Mono',monospace;color:#d4d4d4}}
+.bar{{background:#333;color:#ccc;padding:8px 14px;font:13px system-ui,sans-serif}}
+pre{{margin:0;padding:14px;white-space:pre-wrap;word-break:break-all}}
+.prompt{{color:#6a9955}} .cmd{{color:#dcdcaa}}</style>
+<div class="bar">bash — {html_lib.escape(REPO_ROOT.name)} · {stamp} · render từ output thật của lệnh (scripts/collect_evidence.py --terminal)</div>
+<pre>{body}</pre>"""
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1300, "height": 400}, device_scale_factor=1.5)
+        for filename, content in pages.items():
+            page.set_content(content)
+            page.screenshot(path=str(EVIDENCE / filename), full_page=True)
+        browser.close()
+
+
 def main() -> int:
     import argparse
 
@@ -388,11 +449,15 @@ def main() -> int:
     parser.add_argument("--cid", help="correlation_id của request bất thường")
     parser.add_argument("--baseline-cid", help="correlation_id đối chứng trước incident")
     parser.add_argument("--threshold-ms", type=int, default=2000)
+    parser.add_argument("--terminal", action="store_true", help="Chỉ render ảnh terminal 02–05 (cần API chạy ở :8000)")
     args = parser.parse_args()
 
     load_dotenv(REPO_ROOT / ".env")
     sys.path.insert(0, str(REPO_ROOT))
     EVIDENCE.mkdir(parents=True, exist_ok=True)
+    if args.terminal:
+        terminal_screenshots()
+        return 0
     if args.incident:
         incident_evidence(args)
         incident_dashboard_screenshot()

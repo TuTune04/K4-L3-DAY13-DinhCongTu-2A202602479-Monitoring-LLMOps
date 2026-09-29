@@ -19,10 +19,10 @@
 | Evidence | Đường dẫn |
 |---|---|
 | Pytest cuối | [evidence/01-pytest.txt](evidence/01-pytest.txt) |
-| Log validator | [evidence/02-log-validator.txt](evidence/02-log-validator.txt) |
-| Dashboard validator | [evidence/03-dashboard-validator.txt](evidence/03-dashboard-validator.txt) |
-| Structured log | [evidence/04-structured-log.txt](evidence/04-structured-log.txt) |
-| PII redaction | [evidence/05-pii-redaction.txt](evidence/05-pii-redaction.txt) |
+| Log validator | [evidence/02-log-validator.png](evidence/02-log-validator.png), [.txt](evidence/02-log-validator.txt) |
+| Dashboard validator | [evidence/03-dashboard-validator.png](evidence/03-dashboard-validator.png), [.txt](evidence/03-dashboard-validator.txt) |
+| Structured log | [evidence/04-structured-log.png](evidence/04-structured-log.png), [.txt](evidence/04-structured-log.txt) |
+| PII redaction | [evidence/05-pii-redaction.png](evidence/05-pii-redaction.png), [.txt](evidence/05-pii-redaction.txt) |
 | Trace list | [evidence/06-trace-list.png](evidence/06-trace-list.png) |
 | Trace waterfall | [evidence/07-trace-waterfall.png](evidence/07-trace-waterfall.png) |
 | Trace metadata | [evidence/08-trace-metadata.png](evidence/08-trace-metadata.png) |
@@ -34,7 +34,8 @@
 | Incident trace | [evidence/14-incident-trace.txt](evidence/14-incident-trace.txt) |
 
 Nguồn evidence:
-- 01–05 và 12–14 được thu từ dữ liệu chạy thật bằng [`scripts/collect_evidence.py`](../scripts/collect_evidence.py): 01–03 là output lệnh, 04–05 và 13 trích từ `data/logs.jsonl`, 12 gồm ảnh dashboard lúc 09:46 UTC và bảng metric theo phút tính từ log, 14 dựng từ Langfuse Observations API của project cá nhân.
+- 02–05 `.png` là output thật của lệnh (validator; `curl` tới API :8000 rồi `grep data/logs.jsonl`) được chạy và render thành ảnh terminal bằng `python scripts/collect_evidence.py --terminal`; ảnh 04 thấy header `x-request-id`/`x-response-time-ms` và log JSON của `req-e04e04e0`, ảnh 05 thấy email/điện thoại/CCCD/thẻ giả bị redact và grep toàn file log = 0.
+- 01–05 `.txt` và 12–14 được thu từ dữ liệu chạy thật bằng [`scripts/collect_evidence.py`](../scripts/collect_evidence.py): 01–03 là output lệnh, 04–05 và 13 trích từ `data/logs.jsonl`, 12 gồm ảnh dashboard lúc 09:46 UTC và bảng metric theo phút tính từ log, 14 dựng từ Langfuse Observations API của project cá nhân.
 - 06–10 là ảnh chụp giao diện Langfuse project `day13-k4-l3a-2A202602479`; `scope.attributes.public_key` trong ảnh 08 đã được che.
 - 11 là ảnh chụp headless của `scripts/dashboard.py` ở trạng thái baseline (08:28 UTC).
 
