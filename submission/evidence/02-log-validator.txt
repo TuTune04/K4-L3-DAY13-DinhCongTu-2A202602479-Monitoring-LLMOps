@@ -1,13 +1,13 @@
 # Log validator
-# Thời điểm thu: 2026-09-29 08:28:15 UTC
-# Commit HEAD khi thu: e7c12ad (working tree có thể chứa thay đổi chưa commit)
+# Thời điểm thu: 2026-09-29 09:47:29 UTC
+# Commit HEAD khi thu: 408e0f9 (working tree có thể chứa thay đổi chưa commit)
 $ python scripts/validate_logs.py
 
 --- Lab Verification Results ---
-Total log records analyzed: 190
+Total log records analyzed: 260
 Records with missing required fields: 0
 Records with missing enrichment (context): 0
-Unique correlation IDs found: 87
+Unique correlation IDs found: 121
 Potential PII leaks detected: 0
 
 --- Grading Scorecard (Estimates) ---

@@ -9,3 +9,4 @@ data/audit.jsonl
 config/challenge.json
 .pytest_cache/
 .antigravity/
+config/K4-L3A-challenge.json

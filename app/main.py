@@ -47,7 +47,9 @@ async def metrics() -> dict:
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: Request, body: ChatRequest) -> ChatResponse:
+def chat(request: Request, body: ChatRequest) -> ChatResponse:
+    # Sync handler: FastAPI runs it in a threadpool, so a slow retrieval/LLM call
+    # blocks one worker thread instead of the whole event loop.
     bind_contextvars(
         user_id_hash=hash_user_id(body.user_id),
         session_id=body.session_id,

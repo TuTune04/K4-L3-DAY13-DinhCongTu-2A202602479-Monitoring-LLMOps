@@ -1,0 +1,16 @@
+# Incident metric — day13-k4-l3a-monitoring-llmops-v1
+# Thời điểm thu: 2026-09-29 09:46:28 UTC
+# Commit HEAD khi thu: 408e0f9 (working tree có thể chứa thay đổi chưa commit)
+$ data/logs.jsonl, 2026-09-29T09:40:00Z → 2026-09-29T09:46:00Z, ngưỡng 2000 ms
+
+Mốc điều khiển incident trong log:
+  2026-09-29T09:42:19.020803Z  incident_enabled  {'name': 'rag_slow'}
+  2026-09-29T09:43:53.571539Z  incident_enabled  {'name': 'rag_slow'}
+  2026-09-29T09:45:23.948186Z  incident_enabled  {'name': 'rag_slow'}
+  2026-09-29T09:45:27.421302Z  incident_disabled  {'name': 'rag_slow'}
+
+phút (UTC)   requests   P50 ms   P95 ms   max ms  > ngưỡng  error %
+09:42              10      725     2653     2653         5      0.0
+09:43               8     2651     2651     2651         7      0.0
+09:44               2     2651     2652     2652         3      0.0
+09:45              10      152     3008     3008         5      0.0

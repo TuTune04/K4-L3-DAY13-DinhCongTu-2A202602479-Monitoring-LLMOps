@@ -144,6 +144,28 @@ def clean_metadata(meta: dict | None) -> dict:
     }
 
 
+def waterfall(tree: list[dict], width: int = 50) -> str:
+    root = next(o for o in tree if o.get("parentObservationId") is None)
+    t0 = datetime.fromisoformat(root["startTime"].replace("Z", "+00:00"))
+    total_ms = float(root.get("latency") or 0) * 1000 or 1
+
+    def offset(o, key):
+        return (datetime.fromisoformat(o[key].replace("Z", "+00:00")) - t0).total_seconds() * 1000
+
+    out = f"traceId: {root['traceId']}\ncorrelation_id: {(root.get('metadata') or {}).get('correlation_id')}\n\n"
+    for o in sorted(tree, key=lambda o: (o.get("parentObservationId") is not None, o["startTime"])):
+        start, end = offset(o, "startTime"), offset(o, "endTime")
+        indent = "" if o.get("parentObservationId") is None else "  └─ "
+        a = int(start / total_ms * width)
+        b = max(a + 1, int(end / total_ms * width))
+        bar = " " * a + "█" * (b - a)
+        out += (
+            f"{indent + o['name']:<22}{o['type']:<11}{end - start:7.0f} ms |{bar:<{width}}| "
+            f"id={o['id']} parent={o.get('parentObservationId')}\n"
+        )
+    return out
+
+
 def langfuse_evidence() -> None:
     lf = Langfuse()
     project = lf.project_name()
@@ -175,25 +197,8 @@ def langfuse_evidence() -> None:
     complete = [r for r in roots if len(by_trace[r["traceId"]]) >= 3]
     root = complete[-1]
     tree = sorted(by_trace[root["traceId"]], key=lambda o: o["startTime"])
-    t0 = datetime.fromisoformat(root["startTime"].replace("Z", "+00:00"))
-    total_ms = float(root.get("latency") or 0) * 1000 or 1
-
-    def offset(o, key):
-        return (datetime.fromisoformat(o[key].replace("Z", "+00:00")) - t0).total_seconds() * 1000
-
     out = header(f"Trace waterfall — project `{project}`", f"trace {root['traceId']}")
-    out += f"traceId: {root['traceId']}\ncorrelation_id: {(root.get('metadata') or {}).get('correlation_id')}\n\n"
-    width = 50
-    for o in tree:
-        start, end = offset(o, "startTime"), offset(o, "endTime")
-        indent = "" if o.get("parentObservationId") is None else "  └─ "
-        a = int(start / total_ms * width)
-        b = max(a + 1, int(end / total_ms * width))
-        bar = " " * a + "█" * (b - a)
-        out += (
-            f"{indent + o['name']:<22}{o['type']:<11}{end - start:7.0f} ms |{bar:<{width}}| "
-            f"id={o['id']} parent={o.get('parentObservationId')}\n"
-        )
+    out += waterfall(tree)
     (EVIDENCE / "07-trace-waterfall.txt").write_text(out, encoding="utf-8")
 
     out = header(f"Trace metadata — project `{project}`", f"trace {root['traceId']}")
@@ -269,10 +274,129 @@ def dashboard_screenshot() -> None:
             browser.close()
 
 
+def parse_ts(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def incident_evidence(args) -> None:
+    """12–14: metric → log → trace cho một khoảng sự cố và một correlation_id."""
+    start, end = parse_ts(args.start), parse_ts(args.end)
+    threshold = args.threshold_ms
+    records = [r for r in read_logs() if start <= parse_ts(r["ts"]) <= end]
+
+    # 12 — metric theo từng phút + các mốc bật/tắt incident
+    out = header(
+        f"Incident metric — {args.challenge_id}",
+        f"data/logs.jsonl, {args.start} → {args.end}, ngưỡng {threshold} ms",
+    )
+    out += "Mốc điều khiển incident trong log:\n"
+    for r in records:
+        if r.get("event", "").startswith("incident_"):
+            out += f"  {r['ts']}  {r['event']}  {r['payload']}\n"
+    out += f"\n{'phút (UTC)':<12}{'requests':>9}{'P50 ms':>9}{'P95 ms':>9}{'max ms':>9}{'> ngưỡng':>10}{'error %':>9}\n"
+    buckets: dict[str, list[dict]] = {}
+    for r in records:
+        buckets.setdefault(r["ts"][11:16], []).append(r)
+    for minute, recs in sorted(buckets.items()):
+        lat = sorted(r["latency_ms"] for r in recs if r.get("event") == "response_sent")
+        received = sum(r.get("event") == "request_received" for r in recs)
+        failed = sum(r.get("event") == "request_failed" for r in recs)
+        if not received:
+            continue
+        pct = lambda q: lat[max(0, -(-q * len(lat) // 100) - 1)] if lat else 0  # noqa: E731
+        out += (
+            f"{minute:<12}{received:>9}{pct(50):>9}{pct(95):>9}{(lat[-1] if lat else 0):>9}"
+            f"{sum(v > threshold for v in lat):>10}{failed / received * 100:>9.1f}\n"
+        )
+    (EVIDENCE / "12-incident-metric.txt").write_text(out, encoding="utf-8")
+
+    # 13 — log line của các request vượt ngưỡng, nhấn mạnh correlation_id được chọn
+    slow = [r for r in records if r.get("event") == "response_sent" and r["latency_ms"] > threshold]
+    out = header(
+        f"Incident log — {args.challenge_id}",
+        f"response_sent có latency_ms > {threshold} trong {args.start} → {args.end}",
+    )
+    out += f"{len(slow)} request vượt ngưỡng:\n"
+    for r in slow:
+        out += f"  {r['ts']}  {r['correlation_id']}  feature={r.get('feature')}  latency_ms={r['latency_ms']}  ttft_ms={r.get('ttft_ms')}\n"
+    out += f"\n# Mọi dòng log của request được chọn: grep {args.cid} data/logs.jsonl\n"
+    for r in read_logs():
+        if r.get("correlation_id") == args.cid:
+            out += json.dumps(r, ensure_ascii=False) + "\n"
+    if args.baseline_cid:
+        out += f"\n# Đối chứng trước incident: grep {args.baseline_cid} data/logs.jsonl (response_sent)\n"
+        for r in read_logs():
+            if r.get("correlation_id") == args.baseline_cid and r.get("event") == "response_sent":
+                out += json.dumps(r, ensure_ascii=False) + "\n"
+    (EVIDENCE / "13-incident-log.txt").write_text(out, encoding="utf-8")
+
+    # 14 — trace cùng correlation_id, so với trace baseline
+    lf = Langfuse()
+    project = lf.project_name()
+    now = datetime.now(timezone.utc)
+    obs = lf.get(
+        "/api/public/v2/observations",
+        fromStartTime=(start - timedelta(minutes=5)).isoformat(),
+        toStartTime=now.isoformat(),
+        limit=1000,
+        fields="core,basic,metadata",
+    )["data"]
+    by_trace: dict[str, list[dict]] = {}
+    for o in obs:
+        by_trace.setdefault(o["traceId"], []).append(o)
+
+    def trace_for(cid: str) -> list[dict]:
+        for tree in by_trace.values():
+            if any((o.get("metadata") or {}).get("correlation_id") == cid and o.get("parentObservationId") is None for o in tree):
+                return tree
+        raise SystemExit(f"Không tìm thấy trace cho {cid}")
+
+    out = header(f"Incident trace — {args.challenge_id}, project `{project}`", f"trace có correlation_id = {args.cid}")
+    out += "## Trace trong incident\n" + waterfall(trace_for(args.cid))
+    if args.baseline_cid:
+        out += "\n## Trace đối chứng trước incident\n" + waterfall(trace_for(args.baseline_cid))
+    (EVIDENCE / "14-incident-trace.txt").write_text(out, encoding="utf-8")
+
+
+def incident_dashboard_screenshot() -> None:
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("Bỏ qua 12-incident-metric.png: chưa cài playwright")
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        html_path = Path(tmp) / "dashboard.html"
+        subprocess.run(
+            [sys.executable, "scripts/dashboard.py", "--once", str(html_path)], cwd=REPO_ROOT, check=True
+        )
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1400, "height": 900}, device_scale_factor=1.5)
+            page.goto(html_path.as_uri())
+            page.screenshot(path=str(EVIDENCE / "12-incident-metric.png"), full_page=True)
+            browser.close()
+
+
 def main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Thu evidence vào submission/evidence/")
+    parser.add_argument("--incident", action="store_true", help="Chỉ thu evidence 12–14 của incident")
+    parser.add_argument("--challenge-id", default="")
+    parser.add_argument("--start", help="Đầu khoảng incident (ISO, UTC)")
+    parser.add_argument("--end", help="Cuối khoảng incident (ISO, UTC)")
+    parser.add_argument("--cid", help="correlation_id của request bất thường")
+    parser.add_argument("--baseline-cid", help="correlation_id đối chứng trước incident")
+    parser.add_argument("--threshold-ms", type=int, default=2000)
+    args = parser.parse_args()
+
     load_dotenv(REPO_ROOT / ".env")
     sys.path.insert(0, str(REPO_ROOT))
     EVIDENCE.mkdir(parents=True, exist_ok=True)
+    if args.incident:
+        incident_evidence(args)
+        incident_dashboard_screenshot()
+        return 0
     run_command("01-pytest.txt", "Pytest", ["-m", "pytest", "-q"])
     run_command("02-log-validator.txt", "Log validator", ["scripts/validate_logs.py"])
     run_command("03-dashboard-validator.txt", "Dashboard validator", ["scripts/validate_dashboard.py"])
