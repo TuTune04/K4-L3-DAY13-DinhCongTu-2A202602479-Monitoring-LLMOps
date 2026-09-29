@@ -19,25 +19,25 @@
 | Evidence | Đường dẫn |
 |---|---|
 | Pytest cuối | [evidence/01-pytest.txt](evidence/01-pytest.txt) |
-| Log validator | [evidence/02-log-validator.png](evidence/02-log-validator.png), [.txt](evidence/02-log-validator.txt) |
-| Dashboard validator | [evidence/03-dashboard-validator.png](evidence/03-dashboard-validator.png), [.txt](evidence/03-dashboard-validator.txt) |
-| Structured log | [evidence/04-structured-log.png](evidence/04-structured-log.png), [.txt](evidence/04-structured-log.txt) |
-| PII redaction | [evidence/05-pii-redaction.png](evidence/05-pii-redaction.png), [.txt](evidence/05-pii-redaction.txt) |
+| Log validator | [evidence/02-log-validator.png](evidence/02-log-validator.png) |
+| Dashboard validator | [evidence/03-dashboard-validator.png](evidence/03-dashboard-validator.png) |
+| Structured log | [evidence/04-structured-log.png](evidence/04-structured-log.png) |
+| PII redaction | [evidence/05-pii-redaction.png](evidence/05-pii-redaction.png) |
 | Trace list | [evidence/06-trace-list.png](evidence/06-trace-list.png) |
 | Trace waterfall | [evidence/07-trace-waterfall.png](evidence/07-trace-waterfall.png) |
 | Trace metadata | [evidence/08-trace-metadata.png](evidence/08-trace-metadata.png) |
 | Prompt versions | [evidence/09-prompt-versions.png](evidence/09-prompt-versions.png) |
 | Prompt rollback | [evidence/10-prompt-rollback.png](evidence/10-prompt-rollback.png) |
 | Dashboard runtime | [evidence/11-dashboard-overview.png](evidence/11-dashboard-overview.png) |
-| Incident metric | [evidence/12-incident-metric.png](evidence/12-incident-metric.png), [evidence/12-incident-metric.txt](evidence/12-incident-metric.txt) |
-| Incident log | [evidence/13-incident-log.txt](evidence/13-incident-log.txt) |
-| Incident trace | [evidence/14-incident-trace.txt](evidence/14-incident-trace.txt) |
+| Incident metric | [evidence/12-incident-metric.png](evidence/12-incident-metric.png) |
+| Incident log | [evidence/13-incident-log.png](evidence/13-incident-log.png) |
+| Incident trace | [evidence/14-incident-trace.png](evidence/14-incident-trace.png) |
 
 Nguồn evidence:
-- 02–05 `.png` là output thật của lệnh (validator; `curl` tới API :8000 rồi `grep data/logs.jsonl`) được chạy và render thành ảnh terminal bằng `python scripts/collect_evidence.py --terminal`; ảnh 04 thấy header `x-request-id`/`x-response-time-ms` và log JSON của `req-e04e04e0`, ảnh 05 thấy email/điện thoại/CCCD/thẻ giả bị redact và grep toàn file log = 0.
-- 01–05 `.txt` và 12–14 được thu từ dữ liệu chạy thật bằng [`scripts/collect_evidence.py`](../scripts/collect_evidence.py): 01–03 là output lệnh, 04–05 và 13 trích từ `data/logs.jsonl`, 12 gồm ảnh dashboard lúc 09:46 UTC và bảng metric theo phút tính từ log, 14 dựng từ Langfuse Observations API của project cá nhân.
-- 06–10 là ảnh chụp giao diện Langfuse project `day13-k4-l3a-2A202602479`; `scope.attributes.public_key` trong ảnh 08 đã được che.
-- 11 là ảnh chụp headless của `scripts/dashboard.py` ở trạng thái baseline (08:28 UTC).
+- 01 là output `python -m pytest -q` do [`scripts/collect_evidence.py`](../scripts/collect_evidence.py) ghi lại.
+- 02–05 và 13 là output thật của lệnh (validator; `curl` tới API :8000; `grep`/`python` trên `data/logs.jsonl`) được chạy và render thành ảnh terminal bằng `python scripts/collect_evidence.py --terminal`. Ảnh 04 thấy header `x-request-id`/`x-response-time-ms` và log JSON của `req-e04e04e0`; ảnh 05 thấy email/điện thoại/CCCD/thẻ giả bị redact và grep toàn file log = 0; ảnh 13 thấy mốc bật/tắt incident, 20 request > 2000 ms và hai dòng log của `req-bc1bf62d`.
+- 06–10 và 14 là ảnh chụp giao diện Langfuse project `day13-k4-l3a-2A202602479`; `scope.attributes.public_key` trong ảnh 08 đã được che. Ảnh 14 là tab Timeline của trace `91ccac37d93222d97ef06b679aab3327`.
+- 11 và 12 là ảnh chụp headless của `scripts/dashboard.py`: 11 ở trạng thái baseline (08:28 UTC), 12 ngay sau incident (09:46 UTC).
 
 ![Dashboard overview](evidence/11-dashboard-overview.png)
 
@@ -46,7 +46,7 @@ Nguồn evidence:
 | Nội dung | Baseline | Kết quả cuối | Nhận xét |
 |---|---|---|---|
 | `validate_logs.py` | 30/100 — 23 records, 20 thiếu required fields, 20 thiếu enrichment, 0 correlation ID, 0 PII leak | 100/100 — 260 records, 0 thiếu required, 0 thiếu enrichment, 121 correlation ID, 0 PII leak | Baseline FAILED required fields/correlation ID/enrichment vì `correlation_id = "MISSING"` và chưa bind context; sau CP1 PASSED cả 4 mục |
-| `validate_dashboard.py` | HỢP LỆ: 6/6 panel có trong dashboard contract | HỢP LỆ: 6/6 panel | Contract đã đúng từ đầu; dashboard runtime ở `evidence/11` |
+| `validate_dashboard.py` | HỢP LỆ: 6/6 panel có trong dashboard contract | HỢP LỆ: 6/6 panel | Contract đã đúng từ đầu; dashboard runtime ở `evidence/11-dashboard-overview.png` |
 | `pytest` | 22 passed | 28 passed | Thêm 6 test (PII, child observations, request đồng thời không bị xếp hàng); chạy bằng `.venv/bin/python -m pytest -q` (Python 3.12) |
 | Số traces hợp lệ | 10 trace `lab-agent-run` từ load test | 76 trace có đủ root + `retrieval` + `llm-generation` (98 trace trong 24h, gồm 10 trace baseline CP0) | Xác nhận qua Langfuse Observations API v2, project `day13-k4-l3a-2A202602479`; `userId` đều là hash 12 ký tự |
 | Số PII leak | 0 | 0 | Baseline 0 vì starter đã scrub preview; cuối cùng scrub mọi field string, grep 4 loại PII giả trong log đều = 0 |
@@ -58,7 +58,7 @@ Nguồn evidence:
 - **Cách tạo/nhận và truyền correlation ID:** `CorrelationIdMiddleware` gọi `clear_contextvars()` đầu mỗi request, lấy header `x-request-id` nếu client gửi, nếu không thì sinh `req-<8-hex>` từ `uuid4`. ID được `bind_contextvars` để mọi log trong request đều có `correlation_id`, lưu vào `request.state` để truyền cho agent/trace, và trả lại qua header `x-request-id` cùng `x-response-time-ms`.
 - **Các metadata được ghi vào structured log:** `ts`, `level`, `service`, `event`, `correlation_id`; enrichment `user_id_hash` (SHA-256 cắt 12 ký tự), `session_id`, `feature`, `model`, `env` được bind trong `/chat` trước `request_received`; `response_sent` thêm `latency_ms`, `ttft_ms`, `tokens_in/out`, `cost_usd`, `quality_score`, `tool_name`, `tool_success`.
 - **Cách bảo đảm PII được scrub trước khi ghi:** processor `scrub_event` đứng trước `JsonlFileProcessor` và `JSONRenderer`, scrub mọi giá trị string ở top-level và trong `payload`. `app/pii.py` có pattern cho thẻ, CCCD, email, số điện thoại VN và hộ chiếu; pattern số dài chạy trước để `phone_vn` không cắt mất một phần số thẻ/CCCD. User ID chỉ ghi dưới dạng hash.
-- **Cách kiểm chứng kết quả:** đổi tên log baseline thành `data/logs.cp0-baseline.jsonl`, chạy load test mới rồi `validate_logs.py` đạt 100/100; `pytest` 26 passed (thêm test CCCD, thẻ, hộ chiếu, text thường không bị đổi); `curl` `/chat` trả `x-request-id: req-xxxxxxxx`, gửi `x-request-id: req-deadbeef` thì nhận lại đúng ID; log của câu hỏi chứa email chỉ còn `[REDACTED_EMAIL]`. Request test `req-9119e5ed` chứa email, điện thoại, CCCD và thẻ giả được ghi thành `[REDACTED_EMAIL]`, `[REDACTED_PHONE_VN]`, `[REDACTED_CCCD]`, `[REDACTED_CREDIT_CARD]` (`evidence/05-pii-redaction.txt`).
+- **Cách kiểm chứng kết quả:** đổi tên log baseline thành `data/logs.cp0-baseline.jsonl`, chạy load test mới rồi `validate_logs.py` đạt 100/100; `pytest` 26 passed (thêm test CCCD, thẻ, hộ chiếu, text thường không bị đổi); `curl` `/chat` trả `x-request-id: req-xxxxxxxx`, gửi `x-request-id: req-deadbeef` thì nhận lại đúng ID; log của câu hỏi chứa email chỉ còn `[REDACTED_EMAIL]`. Request test `req-9119e5ed` chứa email, điện thoại, CCCD và thẻ giả được ghi thành `[REDACTED_EMAIL]`, `[REDACTED_PHONE_VN]`, `[REDACTED_CCCD]`, `[REDACTED_CREDIT_CARD]` (`evidence/05-pii-redaction.png`).
 
 ## 5. Tracing và prompt versioning
 
@@ -94,11 +94,11 @@ Nguồn evidence:
   |---|---|---|
   | 09:42:13 | Baseline: 5 query challenge, mỗi request ~151 ms | log `response_sent` `req-170bd1c4` |
   | 09:42:19 | `incident_enabled rag_slow` | log `req-a0a0d362` |
-  | 09:42:21 → 09:44:07 | 15 request challenge, tất cả 2651–2653 ms | `evidence/13-incident-log.txt` |
+  | 09:42:21 → 09:44:07 | 15 request challenge, tất cả 2651–2653 ms | `evidence/13-incident-log.png` |
   | 09:45:23 | Triển khai fix handler đồng bộ, incident vẫn bật | client ~3.1 s thay vì 13.3 s |
   | 09:45:27 | `incident_disabled rag_slow` | 5 request ~152 ms, hệ thống hồi phục |
 
-- **Triệu chứng từ metrics:** panel Latency chuyển **VƯỢT NGƯỠNG**: P50 2651 ms, P95 3006 ms, P99 3008 ms (SLO dashboard ≤ 3000 ms), trong khi TTFT P95 vẫn 50 ms (`evidence/12-incident-metric.png`). Theo phút, P50 tăng từ 151 ms lên 2651 ms ở 09:43 và 09:44; 20/20 request trong khoảng incident vượt ngưỡng challenge 2000 ms (`evidence/12-incident-metric.txt`). Error rate 0% và retrieval success 100%: request không lỗi mà chỉ chậm, nên đây là sự cố latency, không phải availability. Phía client còn tệ hơn: request cuối của mỗi đợt 5 request chờ 13.3 s.
+- **Triệu chứng từ metrics:** panel Latency chuyển **VƯỢT NGƯỠNG**: P50 2651 ms, P95 3006 ms, P99 3008 ms (SLO dashboard ≤ 3000 ms), trong khi TTFT P95 vẫn 50 ms (`evidence/12-incident-metric.png`). Theo phút, P50 tăng từ 151 ms lên 2651 ms ở 09:43 và 09:44; 20/20 request `response_sent` từ 09:42 đến 09:46 vượt ngưỡng challenge 2000 ms (`evidence/13-incident-log.png`). Error rate 0% và retrieval success 100%: request không lỗi mà chỉ chậm, nên đây là sự cố latency, không phải availability. Phía client còn tệ hơn: request cuối của mỗi đợt 5 request chờ 13.3 s.
 - **Log line và correlation ID liên quan:** `req-bc1bf62d` (session `k4-l3a-challenge-s02`, câu hỏi “How should an engineer investigate tail latency?”):
 
   ```json
@@ -106,7 +106,7 @@ Nguồn evidence:
   ```
 
   Log cho thấy `latency_ms` 2651 nhưng `ttft_ms` chỉ 50, token và cost bình thường, nên thời gian không nằm ở LLM. `request_received` của request này ghi lúc 09:44:04.368, dù client gửi cả đợt lúc ~09:43:53: request đã phải chờ ~10.6 s trước khi được xử lý.
-- **Trace ID và span gây ảnh hưởng:** trace `91ccac37d93222d97ef06b679aab3327` (cùng `correlation_id` `req-bc1bf62d`): root `lab-agent-run` 2652 ms, trong đó span **`retrieval` (RETRIEVER) 2500 ms ≈ 94%**, `llm-generation` 151 ms. Trace đối chứng trước incident `9539f1c02d0e5efcef3711d79c85f959` (`req-170bd1c4`): `retrieval` 0 ms, `llm-generation` 151 ms, tổng 152 ms (`evidence/14-incident-trace.txt`). Ngoài ra, thời điểm bắt đầu của 5 trace trong cùng đợt cách nhau đúng ~2.65 s: request được xử lý tuần tự dù gửi song song.
+- **Trace ID và span gây ảnh hưởng:** trace `91ccac37d93222d97ef06b679aab3327` (cùng `correlation_id` `req-bc1bf62d`): root `lab-agent-run` 2652 ms, trong đó span **`retrieval` (RETRIEVER) 2500 ms ≈ 94%**, `llm-generation` 151 ms. Trace đối chứng trước incident `9539f1c02d0e5efcef3711d79c85f959` (`req-170bd1c4`): `retrieval` 0 ms, `llm-generation` 151 ms, tổng 152 ms (`evidence/14-incident-trace.png`). Ngoài ra, thời điểm bắt đầu của 5 trace trong cùng đợt cách nhau đúng ~2.65 s: request được xử lý tuần tự dù gửi song song.
 - **Root cause:** bước retrieval (vector store) chậm thêm ~2.5 s mỗi request (incident `rag_slow` trong `app/mock_rag.py`), trong khi LLM không đổi. Metric (P50/P95 tăng, TTFT không đổi), log (`latency_ms` 2651, `ttft_ms` 50) và trace (`retrieval` 2500 ms) cùng chỉ về một nguyên nhân. **Yếu tố khuếch đại:** endpoint `/chat` là `async def` nhưng gọi code đồng bộ (`time.sleep` trong retrieval/LLM), nên chặn event loop; 5 request đồng thời bị xử lý nối tiếp và độ trễ phía client tăng lên tới 5 × 2.65 s = 13.3 s.
 - **Fix action:**
   1. Mitigation: tắt incident (`python scripts/inject_incident.py --disable`, tương đương khôi phục vector store) lúc 09:45:27; challenge chạy lại 152 ms mỗi request, client ~165 ms.

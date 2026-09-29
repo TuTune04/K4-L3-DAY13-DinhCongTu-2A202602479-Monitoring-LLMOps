@@ -400,10 +400,17 @@ TERMINAL_SHOTS = {
         "for v in student@vinuni.edu.vn 0987654321 001203004567 '4111 1111 1111 1111'; "
         "do echo \"$v -> $(grep -c \"$v\" data/logs.jsonl)\"; done",
     ],
+    "13-incident-log.png": [
+        "grep -E '\"event\": \"incident_(enabled|disabled)\"' data/logs.jsonl | grep '2026-09-29T09:4'",
+        "python -c \"import json; [print(r['ts'], r['correlation_id'], r['feature'], 'latency_ms=%d' % r['latency_ms'], 'ttft_ms=%d' % r['ttft_ms']) "
+        "for r in map(json.loads, open('data/logs.jsonl')) if r.get('event') == 'response_sent' "
+        "and '2026-09-29T09:42' <= r['ts'] <= '2026-09-29T09:46' and r['latency_ms'] > 2000]\"",
+        "grep req-bc1bf62d data/logs.jsonl",
+    ],
 }
 
 
-def terminal_screenshots() -> None:
+def terminal_screenshots(only: list[str] | None = None) -> None:
     """Chạy lệnh thật trong bash và render stdout/stderr thành ảnh kiểu terminal."""
     import html as html_lib
 
@@ -413,6 +420,8 @@ def terminal_screenshots() -> None:
     env = {**os.environ, "PATH": python_dir + os.pathsep + os.environ.get("PATH", "")}
     pages = {}
     for filename, commands in TERMINAL_SHOTS.items():
+        if only and filename not in only:
+            continue
         body = ""
         for command in commands:
             result = subprocess.run(
@@ -449,14 +458,15 @@ def main() -> int:
     parser.add_argument("--cid", help="correlation_id của request bất thường")
     parser.add_argument("--baseline-cid", help="correlation_id đối chứng trước incident")
     parser.add_argument("--threshold-ms", type=int, default=2000)
-    parser.add_argument("--terminal", action="store_true", help="Chỉ render ảnh terminal 02–05 (cần API chạy ở :8000)")
+    parser.add_argument("--terminal", action="store_true", help="Chỉ render ảnh terminal 02–05, 13 (cần API chạy ở :8000)")
+    parser.add_argument("--only", action="append", help="Giới hạn --terminal vào file ảnh này (lặp lại được)")
     args = parser.parse_args()
 
     load_dotenv(REPO_ROOT / ".env")
     sys.path.insert(0, str(REPO_ROOT))
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     if args.terminal:
-        terminal_screenshots()
+        terminal_screenshots(args.only)
         return 0
     if args.incident:
         incident_evidence(args)
