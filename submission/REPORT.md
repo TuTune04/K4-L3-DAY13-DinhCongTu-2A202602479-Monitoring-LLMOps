@@ -8,7 +8,7 @@
 - **MSSV:** 2A202602479
 - **Lớp:** K4-L3A
 - **Repository URL:** https://github.com/TuTune04/K4-L3-DAY13-DinhCongTu-2A202602479-Monitoring-LLMOps
-- **Commit SHA cuối:** _(điền SHA của commit nộp bài ở CP4, lấy bằng `git log -1 --format=%H`)_
+- **Commit SHA cuối:** `15858779b049de665e6457cee4100eaf770d34e8` — commit chứa toàn bộ source, config và evidence; commit ngay sau nó chỉ ghi SHA này vào report.
 - **Challenge ID:** `day13-k4-l3a-monitoring-llmops-v1` (cohort K4, incident `rag_slow`, feature `monitoring`, ngưỡng 2000 ms)
 - **Tên project Langfuse cá nhân:** `day13-k4-l3a-2A202602479`
 
@@ -128,7 +128,7 @@ Nguồn evidence:
 
 ## 9. Checklist trước khi nộp
 
-- [ ] Kết quả và evidence thuộc commit SHA cuối.
+- [x] Kết quả và evidence thuộc commit SHA cuối.
 - [x] Tất cả ảnh/output mở được bằng đường dẫn tương đối.
 - [x] Incident evidence nối đúng metric → log → trace.
 - [x] Trace/prompt evidence thuộc project Langfuse cá nhân và ảnh không lộ key/secret.
